@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      Parent POM for every Food Delivery microservice.
+
+      This lives in its own repository, NOT in the workspace root, because every service
+      inherits from it: a service repo cloned on its own must still resolve it. Install or
+      deploy it before building any service:
+
+          mvn -N install          (from this directory)
+
+      Services reference it by coordinates with an empty <relativePath/>, so it resolves
+      from the artifact repository rather than a sibling directory that may not exist.
+
+      Rules:
+        - Declare versions ONLY in dependencyManagement / pluginManagement below.
+        - A service pom carries groupId and artifactId, and no version, for anything managed.
+        - Prefer letting the Spring Boot BOM manage a version over pinning one here.
+
+      The workspace root keeps a separate, unversioned aggregator whose only job is running
+      one build across all checkouts. Nothing load-bearing lives there.
+    -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.fooddelivery</groupId>
+    <artifactId>food-delivery-parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Food Delivery Parent</name>
+    <description>Parent POM: dependency and plugin management for all Food Delivery microservices</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Mockito/Byte Buddy need these to instrument on a modern JDK. Inherited by every
+             module via surefire's argLine; previously each pom had to repeat it. -->
+        <argLine>-XX:+EnableDynamicAgentLoading -Xshare:off -Dnet.bytebuddy.experimental=true</argLine>
+
+        <!-- BOM versions -->
+        <spring-cloud.version>2023.0.2</spring-cloud.version>
+        <testcontainers.version>1.19.7</testcontainers.version>
+        <opentelemetry.version>1.25.0</opentelemetry.version>
+        <awssdk.version>2.21.0</awssdk.version>
+
+        <!-- Library versions.
+             NOTE: names like mockito.version, h2.version, byte-buddy.version and assertj.version
+             are Spring Boot BOM property names; setting them here deliberately overrides the
+             managed version. Do NOT add junit.version: Boot uses it for JUnit 4 (junit:junit),
+             so a JUnit 5 value there breaks transitive resolution. -->
+        <lombok.version>1.18.38</lombok.version>
+        <bouncycastle.version>1.78.1</bouncycastle.version>
+        <playwright.version>1.44.0</playwright.version>
+        <spring-ai.version>1.0.0-M6</spring-ai.version>
+        <springdoc.version>2.5.0</springdoc.version>
+        <spring-cloud-contract.version>4.1.2</spring-cloud-contract.version>
+        <jjwt.version>0.11.5</jjwt.version>
+        <bucket4j.version>8.10.1</bucket4j.version>
+        <protobuf.version>3.21.12</protobuf.version>
+        <resilience4j.version>2.2.0</resilience4j.version>
+        <logstash-logback.version>7.4</logstash-logback.version>
+        <mockito.version>5.12.0</mockito.version>
+        <byte-buddy.version>1.14.17</byte-buddy.version>
+        <assertj.version>3.25.3</assertj.version>
+        <h2.version>2.2.224</h2.version>
+        <openapi-generator.version>7.6.0</openapi-generator.version>
+        <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
+        <hibernate-spatial.version>6.5.2.Final</hibernate-spatial.version>
+        <jackson-datatype-jts.version>1.2.10</jackson-datatype-jts.version>
+        <commons-text.version>1.10.0</commons-text.version>
+        <spring-retry.version>2.0.5</spring-retry.version>
+        <firebase-admin.version>9.4.2</firebase-admin.version>
+        <google-auth.version>1.29.0</google-auth.version>
+        <openrtb.version>1.5.9</openrtb.version>
+        <roaringbitmap.version>0.9.44</roaringbitmap.version>
+        <disruptor.version>3.4.4</disruptor.version>
+        <clickhouse.version>0.4.6</clickhouse.version>
+        <razorpay.version>1.4.9</razorpay.version>
+        <cashfree.version>6.0.2</cashfree.version>
+        <thumbnailator.version>0.4.20</thumbnailator.version>
+        <imageio-webp.version>3.10.1</imageio-webp.version>
+        <testcontainers-redis.version>2.2.2</testcontainers-redis.version>
+        <typescript-generator.version>3.2.1263</typescript-generator.version>
+        <springdoc-maven-plugin.version>1.4</springdoc-maven-plugin.version>
+    </properties>
+
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- ============ BOM imports ============ -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-bom</artifactId>
+                <version>${opentelemetry.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Resolves the s3 2.20.162 vs 2.21.0 split; drop per-module s3 versions. -->
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${awssdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- ============ Internal ============ -->
+            <dependency>
+                <groupId>com.fooddelivery</groupId>
+                <artifactId>common-library</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- ============ Managed third-party ============ -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-contract-verifier</artifactId>
+                <version>${spring-cloud-contract.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-contract-stub-runner</artifactId>
+                <version>${spring-cloud-contract.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.bucket4j</groupId>
+                <artifactId>bucket4j-core</artifactId>
+                <version>${bucket4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.bucket4j</groupId>
+                <artifactId>bucket4j-redis</artifactId>
+                <version>${bucket4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java-util</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-spring-boot3</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.logstash.logback</groupId>
+                <artifactId>logstash-logback-encoder</artifactId>
+                <version>${logstash-logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${byte-buddy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>${byte-buddy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openapitools</groupId>
+                <artifactId>jackson-databind-nullable</artifactId>
+                <version>${jackson-databind-nullable.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate.orm</groupId>
+                <artifactId>hibernate-spatial</artifactId>
+                <version>${hibernate-spatial.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.jackson</groupId>
+                <artifactId>jackson-datatype-jts</artifactId>
+                <version>${jackson-datatype-jts.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>${commons-text.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.retry</groupId>
+                <artifactId>spring-retry</artifactId>
+                <version>${spring-retry.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.firebase</groupId>
+                <artifactId>firebase-admin</artifactId>
+                <version>${firebase-admin.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.auth</groupId>
+                <artifactId>google-auth-library-credentials</artifactId>
+                <version>${google-auth.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.openrtb</groupId>
+                <artifactId>openrtb-core</artifactId>
+                <version>${openrtb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.roaringbitmap</groupId>
+                <artifactId>RoaringBitmap</artifactId>
+                <version>${roaringbitmap.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lmax</groupId>
+                <artifactId>disruptor</artifactId>
+                <version>${disruptor.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.clickhouse</groupId>
+                <artifactId>clickhouse-jdbc</artifactId>
+                <version>${clickhouse.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.razorpay</groupId>
+                <artifactId>razorpay-java</artifactId>
+                <version>${razorpay.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.cashfree.pg.java</groupId>
+                <artifactId>cashfree_pg</artifactId>
+                <version>${cashfree.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.coobird</groupId>
+                <artifactId>thumbnailator</artifactId>
+                <version>${thumbnailator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.twelvemonkeys.imageio</groupId>
+                <artifactId>imageio-webp</artifactId>
+                <version>${imageio-webp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.redis</groupId>
+                <artifactId>testcontainers-redis</artifactId>
+                <version>${testcontainers-redis.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Lombok on the processor path here means no service can lose annotation
+                     processing by editing its own pom. -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-contract-maven-plugin</artifactId>
+                    <version>${spring-cloud-contract.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.openapitools</groupId>
+                    <artifactId>openapi-generator-maven-plugin</artifactId>
+                    <version>${openapi-generator.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.springdoc</groupId>
+                    <artifactId>springdoc-openapi-maven-plugin</artifactId>
+                    <version>${springdoc-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>cz.habarta.typescript-generator</groupId>
+                    <artifactId>typescript-generator-maven-plugin</artifactId>
+                    <version>${typescript-generator.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <!-- Inherited by every module. Fails the build on a duplicate dependency declaration,
+                 which is how this repository accumulated 40 of them and lost annotation-processor
+                 configuration in three services. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-dependency-hygiene</id>
+                        <goals><goal>enforce</goal></goals>
+                        <configuration>
+                            <rules>
+                                <banDuplicatePomDependencyVersions/>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
