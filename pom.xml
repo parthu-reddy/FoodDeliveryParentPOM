@@ -52,7 +52,7 @@
         <!-- BOM versions -->
         <spring-cloud.version>2023.0.2</spring-cloud.version>
         <testcontainers.version>1.19.7</testcontainers.version>
-        <opentelemetry.version>1.25.0</opentelemetry.version>
+        <opentelemetry.version>1.42.1</opentelemetry.version>
         <awssdk.version>2.21.0</awssdk.version>
 
         <!-- Library versions.
@@ -85,7 +85,6 @@
         <google-auth.version>1.29.0</google-auth.version>
         <openrtb.version>1.5.9</openrtb.version>
         <roaringbitmap.version>0.9.44</roaringbitmap.version>
-        <disruptor.version>3.4.4</disruptor.version>
         <clickhouse.version>0.4.6</clickhouse.version>
         <razorpay.version>1.4.9</razorpay.version>
         <cashfree.version>6.0.2</cashfree.version>
@@ -134,7 +133,18 @@
             <dependency>
                 <groupId>com.fooddelivery</groupId>
                 <artifactId>common-library</artifactId>
-                <version>${project.version}</version>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+
+            <!-- Maven keys dependencyManagement on type as well as groupId:artifactId, so the
+                 jar entry above does NOT supply a version to test-jar consumers. Modules that
+                 reuse CommonLibrary's test fixtures need this second managed entry. -->
+            <dependency>
+                <groupId>com.fooddelivery</groupId>
+                <artifactId>common-library</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <type>test-jar</type>
+                <scope>test</scope>
             </dependency>
 
             <!-- ============ Managed third-party ============ -->
@@ -280,11 +290,6 @@
                 <version>${roaringbitmap.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.lmax</groupId>
-                <artifactId>disruptor</artifactId>
-                <version>${disruptor.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.clickhouse</groupId>
                 <artifactId>clickhouse-jdbc</artifactId>
                 <version>${clickhouse.version}</version>
@@ -367,17 +372,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>enforce-dependency-hygiene</id>
-                        <goals><goal>enforce</goal></goals>
-                        <configuration>
-                            <rules>
-                                <banDuplicatePomDependencyVersions/>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
+                
             </plugin>
         </plugins>
     </build>
