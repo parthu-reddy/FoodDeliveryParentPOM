@@ -95,6 +95,13 @@
         <springdoc-maven-plugin.version>1.4</springdoc-maven-plugin.version>
     </properties>
 
+    <dependencies>
+        <!-- Required by all microservices to fetch configuration from ConfigService on boot -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+    </dependencies>
 
     <dependencyManagement>
         <dependencies>
@@ -137,7 +144,7 @@
                 <groupId>com.fooddelivery</groupId>
                 <artifactId>common-library</artifactId>
                 <version>1.0-SNAPSHOT</version>
-                <type>test-jar</type>
+                <classifier>tests</classifier>
                 <scope>test</scope>
             </dependency>
 
@@ -341,11 +348,7 @@
                     <artifactId>spring-cloud-contract-maven-plugin</artifactId>
                     <version>${spring-cloud-contract.version}</version>
                 </plugin>
-                <plugin>
-                    <groupId>org.openapitools</groupId>
-                    <artifactId>openapi-generator-maven-plugin</artifactId>
-                    <version>${openapi-generator.version}</version>
-                </plugin>
+                
                 <plugin>
                     <groupId>org.springdoc</groupId>
                     <artifactId>springdoc-openapi-maven-plugin</artifactId>
@@ -366,7 +369,41 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                
+            </plugin>
+
+            <!-- Fails the build if a developer edits a Spring Cloud Contract but incremental compilation 
+                 fails to regenerate the tests, leading to testing against stale generated code. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>check-stale-contracts</id>
+                        <phase>process-test-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>python3</executable>
+                            <workingDirectory>${project.basedir}</workingDirectory>
+                            <arguments>
+                                <argument>-c</argument>
+                                <argument><![CDATA[
+import glob, os, sys
+contracts = glob.glob('src/test/resources/contracts/**/*.groovy', recursive=True)
+if not contracts: sys.exit(0)
+generated = glob.glob('target/generated-test-sources/contracts/**/*.java', recursive=True)
+if not generated: sys.exit(0)
+newest = max(os.path.getmtime(g) for g in generated)
+stale = [c for c in contracts if os.path.getmtime(c) > newest]
+for s in stale: print(f'FAIL: {s} is newer than generated tests. Please run mvn clean.')
+sys.exit(1 if stale else 0)
+                                ]]></argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
