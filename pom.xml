@@ -41,6 +41,13 @@
 
     <properties>
         <java.version>17</java.version>
+
+        <!-- OpenApiGenerationTest boots a full Spring context in 17 modules purely to write
+             target/openapi.json. Measured 2026-08-28: 3.57 min, 25% of all test time, for 18 tests.
+             Nothing in the build reads that file. The validators read the COMMITTED */openapi.json
+             at each module root, which is refreshed by hand, and clean deletes the target copy
+             anyway. So it is excluded by default and enabled with -P specs when regenerating. -->
+        <specTestExcludes>**/OpenApiGenerationTest.java</specTestExcludes>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -414,6 +421,41 @@ sys.exit(1 if stale else 0)
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>${specTestExcludes}</exclude>
+                    </excludes>
+                    <systemPropertyVariables>
+                        <!-- KafkaAdmin creates topics during context refresh. With no broker running
+                             it retries localhost:9092 once a second and the context just waits:
+                             measured 2026-08-28, 52 failed connections and 51s of startup for
+                             LedgerService MockRequestTest, which asserts one thing.
+
+                             Set here rather than per profile because the classes that pay it declare
+                             no @ActiveProfiles at all, so there is no profile file to put it in, and
+                             several of their modules have no default test config either.
+
+                             Harmless where @EmbeddedKafka supplies a real broker: that broker creates
+                             topics on demand. Verified across the full reactor, 322 tests green.
+                             A test that genuinely needs topic auto-creation can still override this
+                             with @SpringBootTest(properties = ...), which outranks a system property. -->
+                        <spring.kafka.admin.auto-create>false</spring.kafka.admin.auto-create>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <!-- mvn test -P specs   regenerates every module's target/openapi.json. -->
+            <id>specs</id>
+            <properties>
+                <specTestExcludes>no/such/Path.java</specTestExcludes>
+            </properties>
+        </profile>
+    </profiles>
 </project>
