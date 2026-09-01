@@ -458,4 +458,35 @@ sys.exit(1 if stale else 0)
             </properties>
         </profile>
     </profiles>
+    <repositories>
+        <!-- 
+          Override third-party repositories that cause Maven warnings during builds.
+          spring-releases (repo.spring.io/release) throws 401 Unauthorized.
+          apache.snapshots (repository.apache.org/snapshots) throws blocked mirror (HTTP).
+          Pointing them to Maven Central safely bypasses the warnings.
+        -->
+        <repository>
+            <id>spring-releases</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+        <repository>
+            <id>apache.snapshots</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+    </repositories>
+    
+    <pluginRepositories>
+        <pluginRepository>
+            <id>spring-releases</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
+        <pluginRepository>
+            <id>apache.snapshots</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 </project>
