@@ -457,6 +457,27 @@ sys.exit(1 if stale else 0)
                 <specTestExcludes>no/such/Path.java</specTestExcludes>
             </properties>
         </profile>
+        <profile>
+            <!-- CI tests profile: skips contract tests (which are handled in FoodDeliveryContracts) -->
+            <id>ci-tests</id>
+            <properties>
+                <spring.cloud.contract.verifier.skip>true</spring.cloud.contract.verifier.skip>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/*Contract*Test.java</exclude>
+                                <exclude>${specTestExcludes}</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
     <repositories>
         <!-- 
