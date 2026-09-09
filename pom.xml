@@ -58,7 +58,6 @@
 
         <!-- BOM versions -->
         <spring-cloud.version>2023.0.2</spring-cloud.version>
-        <testcontainers.version>1.19.7</testcontainers.version>
         <opentelemetry.version>1.42.1</opentelemetry.version>
         <awssdk.version>2.21.0</awssdk.version>
 
@@ -97,7 +96,6 @@
         <cashfree.version>6.0.2</cashfree.version>
         <thumbnailator.version>0.4.20</thumbnailator.version>
         <imageio-webp.version>3.10.1</imageio-webp.version>
-        <testcontainers-redis.version>2.2.2</testcontainers-redis.version>
         <typescript-generator.version>3.2.1263</typescript-generator.version>
         <springdoc-maven-plugin.version>1.4</springdoc-maven-plugin.version>
     </properties>
@@ -331,11 +329,6 @@
                 <groupId>com.twelvemonkeys.imageio</groupId>
                 <artifactId>imageio-webp</artifactId>
                 <version>${imageio-webp.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.redis</groupId>
-                <artifactId>testcontainers-redis</artifactId>
-                <version>${testcontainers-redis.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
