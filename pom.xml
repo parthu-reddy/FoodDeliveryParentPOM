@@ -146,22 +146,43 @@
                 <version>1.0-SNAPSHOT</version>
             </dependency>
 
+            <!-- common-library became an aggregator on 2026-09-12; the jar it used to publish no
+                 longer exists. Services depend on the module or modules they actually use, so a
+                 service that wants an enum no longer inherits the AWS SDK. -->
             <dependency>
                 <groupId>com.fooddelivery</groupId>
-                <artifactId>common-library</artifactId>
+                <artifactId>common-core</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fooddelivery</groupId>
+                <artifactId>common-persistence</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fooddelivery</groupId>
+                <artifactId>common-messaging</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fooddelivery</groupId>
+                <artifactId>common-web</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fooddelivery</groupId>
+                <artifactId>common-storage</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fooddelivery</groupId>
+                <artifactId>common-test</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
 
-            <!-- Maven keys dependencyManagement on type as well as groupId:artifactId, so the
-                 jar entry above does NOT supply a version to test-jar consumers. Modules that
-                 reuse CommonLibrary's test fixtures need this second managed entry. -->
-            <dependency>
-                <groupId>com.fooddelivery</groupId>
-                <artifactId>common-library</artifactId>
-                <version>1.0-SNAPSHOT</version>
-                <classifier>tests</classifier>
-                <scope>test</scope>
-            </dependency>
+            <!-- The classifier=tests entry that used to sit here is gone with the test-jar it
+                 managed. common-test is an ordinary jar, so the plain managed entry above supplies
+                 its version and the type-keyed second entry is no longer needed. -->
 
             <!-- ============ Managed third-party ============ -->
             <dependency>
@@ -504,4 +525,24 @@ sys.exit(1 if stale else 0)
             <snapshots><enabled>false</enabled></snapshots>
         </pluginRepository>
     </pluginRepositories>
+
+    <!--
+      Publishing only. There is deliberately no <repositories> entry here to match it.
+
+      GitHub Packages requires authentication even to read a public package, so a resolution
+      repository in this pom would make every developer's build consult an authenticated remote for
+      SNAPSHOT updates, and a machine without a token would start failing builds that work today.
+      Resolution lives in a CI-only settings.xml instead; local builds keep resolving from ~/.m2.
+
+      The <id> must match the <server><id> the workflow writes, or deploy fails with a 401 that
+      reads like a permissions problem rather than a configuration one.
+    -->
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages — parthu-reddy/FoodDeliveryParentPOM</name>
+            <url>https://maven.pkg.github.com/parthu-reddy/FoodDeliveryParentPOM</url>
+        </repository>
+    </distributionManagement>
+
 </project>
