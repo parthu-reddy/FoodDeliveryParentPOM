@@ -546,3 +546,4 @@ sys.exit(1 if stale else 0)
     </distributionManagement>
 
 </project>
+<!-- trigger rebuild for wipe -->
