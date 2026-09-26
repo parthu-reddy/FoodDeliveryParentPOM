@@ -53,8 +53,12 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Mockito/Byte Buddy need these to instrument on a modern JDK. Inherited by every
-             module via surefire's argLine; previously each pom had to repeat it. -->
-        <argLine>-XX:+EnableDynamicAgentLoading -Xshare:off -Dnet.bytebuddy.experimental=true</argLine>
+             module via surefire's argLine; previously each pom had to repeat it.
+             -Duser.timezone=Pacific/Chatham (+12:45/+13:45, DST): tests run in a zone nobody develops in,
+             so code that leans on the JVM default zone fails here, not in production. A module that
+             overrides argLine must repeat it; TimeDisciplineRules' sentinel fails if it doesn't.
+             RandomDocuments/TimezoneCorrectness_2026-09-25. -->
+        <argLine>-XX:+EnableDynamicAgentLoading -Xshare:off -Dnet.bytebuddy.experimental=true -Duser.timezone=Pacific/Chatham</argLine>
 
         <!-- BOM versions -->
         <spring-cloud.version>2023.0.2</spring-cloud.version>
